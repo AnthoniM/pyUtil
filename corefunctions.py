@@ -766,17 +766,30 @@ def S(V, f, T, R, F, units='V2'):
         a = c.k*T*R
     return a*(F*(xcothx(v-w) + xcothx(v+w))+(1.-F)*2*xcothx(w))
 
-def dS(V, f, T, R, F, normalized=True):
+def dS(V, f, T, R, F, variable='None', units='None'):
     """ Compute the derivative of the noise of a coherent conductor.
     """
+    # Note : There is a subtlety with a derivative take with respect to the current.
+    #        The link between current and voltage is ohm's law dV = Z dI and Z can
+    #        be complex. So the passage from one to another can make the derivative
+    #        a complex quantity. Is there anything wrong with that ?
     v = c.e*V/(2*c.k*T)
     w = c.h*f/(2*c.k*T)
     # We derive with respect to Voltage V and v = eV/kT
-    if normalized:
-        a = 1/2.
-    else:
-        a = 2*c.e
-    return a*(dxcothx(v-w) + dxcothx(v+w))
+    assert(variable in ['None','V','I'])
+    if variable=='None':
+        a = 1.
+    elif variable=='V':
+        a = c.e/(2*c.k*T)
+    elif variable=='I':
+        a = R*c.e/(2*c.k*T)
+
+    assert(units in ['V2','None'])
+    if units=='None':
+        b = 1/2.
+    elif units=='V2':
+        b = c.k*T*R
+    return a*b*F*(dxcothx(v-w) + dxcothx(v+w))
 
 def Sphoto(V, Vac, f, f0, T, R, F, order, units='V2'):
     """
@@ -802,7 +815,7 @@ def Sphoto(V, Vac, f, f0, T, R, F, order, units='V2'):
     func = lambda n: S(V, f+n*f0, T, R, F, units=units)
     return np.sum(BesselWeighting(z, func, order), axis=0)
 
-def dSphoto(V, Vac, f, f0, T, order, normalized=True):
+def dSphoto(V, Vac, f, f0, T, R, F, order, variable='None', units='None'):
     """
     Computes the derivative of the photoassisted noise (voltage variance) of a tunnel junction. 
         V : bias voltage
@@ -813,11 +826,8 @@ def dSphoto(V, Vac, f, f0, T, order, normalized=True):
         order : maximal order of the bessel function
         normalized : normalized to one at +/-infinity when true
     """
-    v = c.e*V/(2*c.k*T)
-    w = c.h*f/(2*c.k*T)
-    w0 = c.h*f0/(2*c.k*T)
     z = c.e*Vac/(c.h*f0)
-    func = lambda n: dS(V,f+f0,T,R,F,normalized=normalized)
+    func = lambda n: dS(V, f+n*f0, T, R, F, variable=variable, units=units)
     return np.sum(BesselWeighting(z, func, order), axis=0)
 
 def BesselWeighting(z, f, order, p=0, kind='first', threashold=1e-6):
