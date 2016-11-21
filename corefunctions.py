@@ -965,7 +965,7 @@ def expand_dims(x, extra_shape):
     """
     x = np.asanyarray(x)
     init_shape = x.shape
-    return np.squeeze(np.array([(x.T).tolist()]*np.prod(extra_shape)).T).reshape(init_shape+extra_shape)
+    return np.squeeze(np.array([(x.T).tolist()]*np.prod(extra_shape)).T.reshape(init_shape+extra_shape))
 
 def change_in_array(x):
     """ Return an array with integer elements starting from 0 
