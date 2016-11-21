@@ -635,12 +635,13 @@ class ExploreParameters(object):
         self.entries = {}
         i = 0
         assert(len(self.argnames)==len(self.defaults))
-        for field, default in zip(self.argnames, self.defaults):
+        #for field, default in zip(self.argnames, self.defaults):
+        for field in self.argnames:
             if not i%2:
                 row = Tk.Frame(self.root)
             lab = Tk.Label(row, width=22, text=field+": ", anchor='w')
             ent = Tk.Entry(row)
-            ent.insert(0,str(default))
+            ent.insert(0,str(self.defaults[field]))
             row.pack(side=Tk.TOP, fill=Tk.X, padx=5, pady=5)
             lab.pack(side=Tk.LEFT)
             ent.pack(side=Tk.LEFT, expand=Tk.NO, fill=Tk.X)
@@ -648,7 +649,7 @@ class ExploreParameters(object):
             i += 1
 
     def _evaluate_func(self):
-        params = {name:float(self.entries[name].get()) for name in self.argnames}
+        params = {name:cf.float_or_string(self.entries[name].get()) for name in self.argnames}
         return [f(self.x, *[params[a] for a in args]) for f,args in zip(self.func, self.func_args)]
 
     def _text(self):
@@ -693,10 +694,12 @@ class ExploreParameters(object):
             self.ax1.set_prop_cycle(None)
             self.ax2.set_prop_cycle(None)
         if self.counter>=self.lasting:
-            self.params.pop(0)
+            if self.params:
+                self.params.pop(0)
             for i in self.func:
-                self.line1.pop(0).remove()
-                self.line2.pop(0).remove()
+                if self.line1:
+                    self.line1.pop(0).remove()
+                    self.line2.pop(0).remove()
             #self.line1 = self.line1[len(self.func):]
             #self.line2 = self.line2[len(self.func):]
         self._plot()
