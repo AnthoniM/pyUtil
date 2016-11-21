@@ -686,10 +686,11 @@ class ExploreParameters(object):
     def _update(self):
         #self.canvas.figure.clf()
         if self.lasting:
-            for i in range(len(self.func)):
-                self.line1[-i+1].set_color(self.colors[self.color_iterator%(len(self.colors)-(1+i))])
-                self.line2[-i+1].set_color(self.colors[self.color_iterator%(len(self.colors)-(1+i))])
-            self.color_iterator+=1
+            pass
+        #    for i in range(len(self.func)):
+        #        self.line1[-(i+1)].set_color(self.colors[self.color_iterator%(len(self.colors)-(1+i))])
+        #        self.line2[-(i+1)].set_color(self.colors[self.color_iterator%(len(self.colors)-(1+i))])
+        #    self.color_iterator+=1
         else:
             self.ax1.set_prop_cycle(None)
             self.ax2.set_prop_cycle(None)
