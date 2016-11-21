@@ -15,7 +15,7 @@ from scipy.optimize import leastsq
 class nlfit:
     """ Description to come
     """
-    def __init__(self, xs, ys, p0, fs, pmasks=None, fullo=1, 
+    def __init__(self, xs, ys, p0, fs, pmasks=None, fullo=1, scales=None,
                    xerrs=None, yerrs=None, verbose=True):
         # TODO : Add the possibility to choose the weigth function (to generate 'self.scales').
         # I want to take advantage of the numpy.array functionnality to its maximum here.
@@ -54,7 +54,10 @@ class nlfit:
         self.para = p0
         self.fs = np.asanyarray(fs)
         self.pmasks = pmasks
-        self.scales = [mean(abs(y)) for y in ys]
+        if scales is None:
+            self.scales = [mean(abs(y)) for y in ys]
+        else:
+            self.scales = scales
         self.fullo = fullo
         self.verbose = verbose
 
