@@ -598,9 +598,15 @@ def interpolate(x, xp, yp, axis=-1):
     """ Returns a linear interpolation along a given axis of the 
         data points (xp, yp) along x.
     """
-    _x = flatten(x, axis)
-    _xp = flatten(xp, axis)
-    _yp = flatten(yp, axis)
+    xp = np.asanyarray(xp)
+    if xp.ndim==1:
+        _x = [x]
+        _xp = [xp]
+        _yp = [yp]
+    else:
+        _x = flatten(x, axis)
+        _xp = flatten(xp, axis)
+        _yp = flatten(yp, axis)
     return np.array([interp(i,j,k) for i,j,k in zip(_x,_xp,_yp)]).reshape(x.shape)
 
 def nestedfor_comprehension(lst, func, **kwarg):
