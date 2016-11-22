@@ -348,7 +348,7 @@ class DynamicPlot(tk.Tk, object):
         """ Generates the legend from the label of each parameter list. """
         lgd = self.lbl[0]
         for i in self.lbl[1:]:
-            lgd = np.array([[k+'/'+l for k in lgd] for l in i]).flatten()
+            lgd = np.array([k+'/'+l for k in lgd for l in i])
         return lgd
 
     def update_legend(self):
