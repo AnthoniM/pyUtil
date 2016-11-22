@@ -152,6 +152,12 @@ def figtext(ax, x, y, s):
     x_, y_ = rel_coord(ax, x, y)
     ax.text(x_, y_, s)
 
+def savefig(fig, name):
+    """ Saves figure and crop the output pdf.
+    """
+    fig.savefig(name)
+    os.system('pdfcrop %s %s'%(name,name))
+
 def logarithm(x, base=10):
     """ Compute the logaritm for a given base """
     y = np.log10(x)/np.log10(base)
@@ -569,17 +575,33 @@ def axis_slice(x,first,last,step,axis=-1):
     ind = tuple(ind)
     return x[ind]
 
+def flatten(x, axis=-1):
+    """ Reshape an array to a 2D array at most.
+    """
+    tmp = np.rollaxis(x, axis)
+    return np.squeeze(tmp.reshape((len(tmp),-1)).T)
+
+def interp(x, xp, yp):
+    """ A wrapper around np.interp that 
+        make shure that the array are sorted
+        in increasing order.
+    """
+    xp = np.asanyarray(xp)
+    yp = np.asanyarray(yp)
+    index_array = np.argsort(xp)
+    xp = xp[index_array]
+    yp = yp[index_array]
+    return np.interp(x, xp, yp)
+
+
 def interpolate(x, xp, yp, axis=-1):
     """ Returns a linear interpolation along a given axis of the 
         data points (xp, yp) along x.
     """
-    def flatten(x, axis):
-        tmp = np.rollaxis(x, axis)
-        return tmp.reshape((len(tmp),-1)).T
     _x = flatten(x, axis)
     _xp = flatten(xp, axis)
     _yp = flatten(yp, axis)
-    return np.array([np.interp(i,j,k) for i,j,k in zip(_x,_xp,_yp)]).reshape(x.shape)
+    return np.array([interp(i,j,k) for i,j,k in zip(_x,_xp,_yp)]).reshape(x.shape)
 
 def nestedfor_comprehension(lst, func, **kwarg):
     """
