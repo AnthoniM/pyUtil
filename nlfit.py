@@ -48,7 +48,7 @@ class nlfit:
 
         if any(len(i) != len(xs) \
                 for i in [ys, fs, pmasks, self.xerrs, self.yerrs]):
-            raise(AssertionError,"List size don't match")
+            raise AssertionError("List size don't match")
 
         self._p0 = p0
         self.para = p0
