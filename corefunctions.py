@@ -752,11 +752,13 @@ def X(V, f, T, R, F, p=0, units='V2'):
     """
     v = c.e*V/(2*c.k*T)
     w = c.h*f/(2*c.k*T)
-    assert(units in ['V2','None'])
+    assert(units in ['V2','I2','None'])
     if units=='None':
         a = 1.
     elif units=='V2':
         a = c.k*T*R
+    elif units=='I2':
+        a = c.k*T/R
     return a*F * (xcothx(v+w)+(-1)**p*xcothx(v-w))
 
 def Xphoto(V, Vac, f, f0, T, R, F, p, order, units='V2'):
@@ -782,42 +784,59 @@ def SQ(V, Vac, f, f0, T, R, F, p, order, units='V2'):
 def S(V, f, T, R, F, units='V2'):
     """ Compute the noise of a coherent conductor.
     """
-    T = np.abs(T)
-    R = np.abs(R)
-    F = np.abs(F)
+    #T = np.abs(T)
+    #R = np.abs(R)
+    #F = np.abs(F)
     v = c.e*V/(2*c.k*T)
     w = c.h*f/(2*c.k*T)
-    assert(units in ['V2','None'])
+    assert(units in ['V2','I2','W','None'])
     if units=='None':
         a = 1.
+    if units=='W':
+        a = c.k*T
     elif units=='V2':
         a = c.k*T*R
+    elif units=='I2':
+        a = c.k*T/R
     return a*(F*(xcothx(v-w) + xcothx(v+w))+(1.-F)*2*xcothx(w))
 
-def dS(V, f, T, R, F, variable='None', units='None'):
+def dS(V, f, T, R, F, variable='I', units='I2', axis=-1):
     """ Compute the derivative of the noise of a coherent conductor.
+        parameters :
+            -variable : differentiation variable : 'I', 'V'.
+            -units : units of the spectral density : 'I2', 'V2'.
+            -axis : axis along which to derive the resistance R with respect to V.
     """
-    # Note : There is a subtlety with a derivative take with respect to the current.
-    #        The link between current and voltage is ohm's law dV = Z dI and Z can
-    #        be complex. So the passage from one to another can make the derivative
-    #        a complex quantity. Is there anything wrong with that ?
+
     v = c.e*V/(2*c.k*T)
     w = c.h*f/(2*c.k*T)
-    # We derive with respect to Voltage V and v = eV/kT
-    assert(variable in ['None','V','I'])
-    if variable=='None':
-        a = 1.
-    elif variable=='V':
-        a = c.e/(2*c.k*T)
-    elif variable=='I':
-        a = R*c.e/(2*c.k*T)
 
-    assert(units in ['V2','None'])
+    assert(variable in ['V','I'])
+    if variable=='V':
+        a = 1.
+    elif variable=='I':
+        a = R
+
+    assert(units in ['V2','I2', 'W', 'None'])
     if units=='None':
-        b = 1/2.
+        return F*(dxcothx(v-w) + dxcothx(v+w))
+    if units=='W':
+        return a*c.e*F*(dxcothx(v-w) + dxcothx(v+w))
     elif units=='V2':
-        b = c.k*T*R
-    return a*b*F*(dxcothx(v-w) + dxcothx(v+w))
+        sign = 1.
+        b = R
+    elif units=='I2':
+        sign = -1.
+        b = 1./R
+
+    # Make shure it is not a float or a list with single element
+    if np.shape(R)!=() and np.shape(R)!=(1,):
+        dRdV = gradient(V,R, axis=axis)*S(V, f, T, R, F, units='I2')*sign
+    else:
+        # If the resistance is constant this term is null
+        dRdV = 0
+
+    return a*b*(dRdV + c.e*F*(dxcothx(v-w) + dxcothx(v+w)))
 
 def Sphoto(V, Vac, f, f0, T, R, F, order, units='V2'):
     """
@@ -843,7 +862,7 @@ def Sphoto(V, Vac, f, f0, T, R, F, order, units='V2'):
     func = lambda n: S(V, f+n*f0, T, R, F, units=units)
     return np.sum(BesselWeighting(z, func, order), axis=0)
 
-def dSphoto(V, Vac, f, f0, T, R, F, order, variable='None', units='None'):
+def dSphoto(V, Vac, f, f0, T, R, F, order, variable='I', units='I2'):
     """
     Computes the derivative of the photoassisted noise (voltage variance) of a tunnel junction. 
         V : bias voltage
@@ -1037,7 +1056,6 @@ def gradient(x,y, axis=-1):
     """ Computes the gradient of y relative to x 
         along an given axis.
     """
-    x = np.asanyarray(x)
     y = np.asanyarray(y)
     a = np.swapaxes(np.zeros(x.shape), axis, 0)
     dy = np.diff(y, axis=axis)
@@ -1048,6 +1066,16 @@ def gradient(x,y, axis=-1):
     a[1:-1] = (p[:-1]+p[1:])/2.
     # Reshape the array to the shape of x and y.
     return np.swapaxes(a, axis, 0)
+
+def V2I(V, R, zero=0, axis=-1):
+    """ Computes current from differential resistance and voltage.
+
+        parameters: 
+            -zero : specifies the position of the zero voltage point
+                 relative to the current (I).
+            -axis : axis upon which to integrate
+    """
+    return I2V(V,1./R, zero=zero, axis=axis)
 
 def I2V(I, R, zero=0, axis=-1):
     """ Transforms differential resistance measurement (R)
@@ -1075,12 +1103,6 @@ def I2V(I, R, zero=0, axis=-1):
         a -= a[I==zero]
         return a
 
-
-#def fit(x0, y0, deg=25):
-#    _fit = np.poly1d(np.polyfit(x0, y0, deg))
-#    return _fit
-
-#def lockin_averaging(x, a, x0, y0, deg=20, type='SIN', axis=-1):
 def lockin_averaging(x, a, fit, xlim=None, type='SIN', axis=-1, npts=1001):
     """ Makes an a*sin(w*t) averaging of the fit function evaluated around x.
         The 'axis' argument is not implemented yet.
