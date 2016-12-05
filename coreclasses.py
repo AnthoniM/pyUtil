@@ -445,8 +445,12 @@ class Plot(object):
         yunits = kwargs.get('yunits', 1.)
         zunits = kwargs.get('zunits', 1.)
 
+        X *= xunits
+        Y *= yunits
+        Z *= zunits
+
         # Plot
-        ax.plot_surface(xunits*X, yunits*Y, zunits*Z, 
+        ax.plot_surface(X, Y, Z, 
                         rstride=rstride, 
                         cstride=cstride, 
                         cmap=cmap, 
