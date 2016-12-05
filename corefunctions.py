@@ -752,9 +752,11 @@ def X(V, f, T, R, F, p=0, units='V2'):
     """
     v = c.e*V/(2*c.k*T)
     w = c.h*f/(2*c.k*T)
-    assert(units in ['V2','I2','None'])
+    assert(units in ['V2','I2','W','None'])
     if units=='None':
         a = 1.
+    elif units=='W':
+        a = c.k*T
     elif units=='V2':
         a = c.k*T*R
     elif units=='I2':
