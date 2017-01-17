@@ -152,11 +152,17 @@ def figtext(ax, x, y, s):
     x_, y_ = rel_coord(ax, x, y)
     ax.text(x_, y_, s)
 
+def croppdf(name):
+    """ Crop a pdf
+    """
+    name = name.replace('(','\(').replace(')','\)').replace(' ', '\ ')
+    os.system('pdfcrop %s %s'%(name,name))
+
 def savefig(fig, name):
     """ Saves figure and crop the output pdf.
     """
     fig.savefig(name)
-    os.system('pdfcrop %s %s'%(name,name))
+    croppdf(name)
 
 def logarithm(x, base=10):
     """ Compute the logaritm for a given base """
@@ -768,6 +774,7 @@ def Xphoto(V, Vac, f, f0, T, R, F, p, order, units='V2'):
         of a photoassisted coherent conductor.
     """
     z = c.e*Vac/(c.h*f0)
+    # Pour la susceptibilité photo-assistée, f -> f+n*f0 !
     func = lambda n: X(V, f+n*f0, T, R, F, p, units=units)
     return np.sum(BesselWeighting(z, func, order, p), axis=0)
 
@@ -861,7 +868,8 @@ def Sphoto(V, Vac, f, f0, T, R, F, order, units='V2'):
     # g(x)=xcothx(x). Therefore I omit the factor 1/2
     # over the sum.
     #f = lambda n: c.k*T*R*(F*(xcothx(v-w+n*w0) + xcothx(v+w+n*w0))+(1.-F)*2*xcothx(w))
-    func = lambda n: S(V, f+n*f0, T, R, F, units=units)
+    # Pour le bruit photo-assité , V -> V+n*f0*c.h/c.e !
+    func = lambda n: S(V-n*f0*c.h/c.e, f, T, R, F, units=units)
     return np.sum(BesselWeighting(z, func, order), axis=0)
 
 def dSphoto(V, Vac, f, f0, T, R, F, order, variable='I', units='I2'):
@@ -876,7 +884,8 @@ def dSphoto(V, Vac, f, f0, T, R, F, order, variable='I', units='I2'):
         normalized : normalized to one at +/-infinity when true
     """
     z = c.e*Vac/(c.h*f0)
-    func = lambda n: dS(V, f+n*f0, T, R, F, variable=variable, units=units)
+    # Pour la dérivée du bruit photo-assité , V -> V+n*f0*c.h/c.e !
+    func = lambda n: dS(V-n*f0*c.h/c.e, f, T, R, F, variable=variable, units=units)
     return np.sum(BesselWeighting(z, func, order), axis=0)
 
 def BesselWeighting(z, f, order, p=0, kind='first', threashold=1e-6):
