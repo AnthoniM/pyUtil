@@ -328,7 +328,7 @@ class Plot(object):
         # Plot
         params = kwargs.get('params', dict())
         lines = ax.plot(xunits*x, yunits*y, **params)
-        
+
         # Labels
         xlabel = kwargs.get('xlabel', '')
         ax.set_xlabel(xlabel) 
@@ -364,7 +364,7 @@ class Plot(object):
         save = kwargs.get('save', False)
         savepath = kwargs.get('savepath',False)
         if save and filename and savepath:
-            fig.savefig(savepath+filename)
+            cf.savefig(fig, savepath+filename)
         return fig
 
     def _plot_complex(self, x, y, **kwargs):
@@ -429,7 +429,7 @@ class Plot(object):
         save = kwargs.get('save', False)
         savepath = kwargs.get('savepath',False)
         if save and filename and savepath:
-            fig.savefig(savepath+filename)
+            cf.savefig(fig, savepath+filename)
         return fig
 
     def _plot3D(self, X, Y, Z, **kwargs):
@@ -455,14 +455,30 @@ class Plot(object):
                         cstride=cstride, 
                         cmap=cmap, 
                         linewidth=linewidth)
-        offx, _ = ax.get_xlim()
-        _, offy = ax.get_ylim()
-        offz, _ = ax.get_zlim()
+        # Limits
+        xlimits = kwargs.get('xlimits', (None,None))
+        ax.set_xlim3d(xlimits) 
+        ylimits = kwargs.get('ylimits', (None,None))
+        ax.set_ylim3d(ylimits) 
+        zlimits = kwargs.get('zlimits', (None,None))
+        # Contours
+        ax.set_zlim3d(zlimits) 
+        if kwargs.get('xcontour', None)=='front':
+            _, offx = ax.get_xlim()
+        else:
+            offx, _ = ax.get_xlim()
+        if kwargs.get('ycontour', None)=='front':
+            offy,_ = ax.get_ylim()
+        else:
+            _, offy = ax.get_ylim()
+        if kwargs.get('zcontour', None)=='top':
+            _,offz = ax.get_zlim()
+        else:
+            offz, _ = ax.get_zlim()
         ax.contour(X, Y, Z, zdir='z', offset=offz, cmap=cm.coolwarm)
         ax.contour(X, Y, Z, zdir='x', offset=offx, cmap=cm.coolwarm)
         ax.contour(X, Y, Z, zdir='y', offset=offy, cmap=cm.coolwarm)
 
-        
         view = kwargs.get('view',(25,-50))
         ax.view_init(*view)
         #fig.text(0.92, 0.01, date)
@@ -481,13 +497,6 @@ class Plot(object):
         ax.set_yscale(yscales) 
         zscales = kwargs.get('zscales', 'linear')
         ax.set_yscale(zscales) 
-        # Limits
-        xlimits = kwargs.get('xlimits', (None,None))
-        ax.set_xlim3d(xlimits) 
-        ylimits = kwargs.get('ylimits', (None,None))
-        ax.set_ylim3d(ylimits) 
-        zlimits = kwargs.get('zlimits', (None,None))
-        ax.set_zlim3d(zlimits) 
         # Title 
         suptitle = kwargs.get('suptitle', '')
         fig.suptitle(suptitle)
@@ -496,7 +505,7 @@ class Plot(object):
         save = kwargs.get('save', False)
         savepath = kwargs.get('savepath', False)
         if save and filename and savepath:
-            fig.savefig(savepath+filename)
+            cf.savefig(fig, savepath+filename)
         return fig
 
 class ExploreParameters(object):
@@ -531,7 +540,7 @@ class ExploreParameters(object):
     #        Implement AUTOSCALING of the y axis
 
     def __init__(self, x, func, defaults=[], units=[], 
-                 figsize=[16,10], 
+                 figsize=[12,9], 
                  initial_data=None, 
                  real_imag=False, 
                  lasting=0, 
